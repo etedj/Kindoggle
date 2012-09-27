@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Kindoggle</title>
+		<style type="text/css">
+		* {
+			font-size: 40px;
+			font-family: Arial, Helvetica, sans-serif;
+		}
+		input, img {
+			font-size: 40px;
+			width: 400px;
+			margin: 20px 0 0 0;
+		}
+		a {
+			font-size: 18px;
+		}
+		textarea {
+			font-size: 18px;
+		}
+		table {
+			width: 400px;
+			height: 400px;
+			margin: 20px 0 0 0;
+			table-layout: fixed;
+		}
+		table td {
+			text-align: center;
+			padding: 0 0 0 0;
+		}
+		.upper {
+			padding-top: 7px;
+		}
+		.lower {
+			padding-bottom: 7px;
+		}
+		.left {
+			padding-right: 15px;
+		}
+		.mid {
+			padding-right: 10px;
+		}
+		.right {
+			padding-left: 7px ;
+		}
+		#timeLeft {
+			font-size: 60px;
+			margin: 10px 0 0 0;
+		}
+		
+		</style>
+		<script type="text/javascript">
+		
+			var diceValues = new Array("PCHOAS", "OATTOW", "LRYTTE", "VTHRWE", 
+									   "EGHWNE", "SEOTIS", "ANAEEG", "IDSYTT", 
+									   "MTOICU", "AFPKFS", "XLDERI", "ENSIEU", 
+									   "YLDEVR", "ZNRNHL", "NMIQHU", "OBBAOJ");
+			var pause = false;
+			var gameBoard;
+			var boardStr="SHORGISTHTEDSSEN";
+			var start = false;
+			var SEC_TO_UPDATE = 5;
+			var timeoutID = 0;
+			
+			function Dice(values) {
+				this.values = values;
+				var random = Math.floor(Math.random() * 6);
+				this.value = values.substring(random, random+1);
+			}
+			function Board(diceArray) {
+			
+				boardStr = "";
+			
+				this.dice = new Array(
+					new Array(diceArray[0], diceArray[1], diceArray[2], diceArray[3]),
+					new Array(diceArray[4], diceArray[5], diceArray[6], diceArray[7]),
+					new Array(diceArray[8], diceArray[9], diceArray[10], diceArray[11]),
+					new Array(diceArray[12], diceArray[13], diceArray[14], diceArray[15])
+				);
+				
+				for(i = 0; i < 100; i++) {
+					var fromX = Math.floor(Math.random() * 4);
+					var fromY = Math.floor(Math.random() * 4);
+					var toX = Math.floor(Math.random() * 4);
+					var toY = Math.floor(Math.random() * 4);
+					var temp = this.dice[fromX][fromY];
+					this.dice[fromX][fromY] = this.dice[toX][toY];
+					this.dice[toX][toY] = temp; 
+				}
+				
+				for (i = 0; i < 4; i++) 
+					for (j = 0; j < 4; j++) 
+						boardStr += this.dice[i][j].value;
+			};
+			
+			function DrawBoard() {
+				for (i = 0; i < 4; i++) {
+					for (j = 0; j < 4; j++) {
+						var tdID = "td" + i.toString() + j.toString();
+						var currTD = document.getElementById(tdID);
+						currTD.innerHTML = gameBoard.dice[i][j].value.toString();
+					}
+				}
+			};
+			
+			function ClearBoard() {
+				for (i = 0; i < 4; i++) {
+					for (j = 0; j < 4; j++) {
+						var tdID = "td" + i.toString() + j.toString();
+						var currTD = document.getElementById(tdID);
+						currTD.innerHTML = "";
+					}
+				}
+			}
+			
+			function drawTime() {
+				var secLeftStr = (secLeft < 10) ? "0" + secLeft.toString() : secLeft.toString(); 
+				var newGameBtn = document.getElementById("newGameBtn");
+				//newGameBtn.style.fontSize = "40px";
+				newGameBtn.value = minLeft.toString() + ":" + secLeftStr;
+			}
+			
+			function ButtonPressed() {
+				if(start)
+					pauseGame();
+				else
+					CreateBoard();
+			}
+			
+			function CreateBoard() {
+				start = true;
+				document.bgColor = "white";
+				clearTimeout(timeoutID);
+				
+				var diceArray = new Array();
+				for(i = 0; i < diceValues.length; i++)
+					diceArray[i] = new Dice(diceValues[i]);
+				gameBoard = new Board(diceArray);
+				
+				minLeft = 3;
+				secLeft = 0;
+				DrawBoard();
+				drawTime();
+				timeoutID = setTimeout("UpdateTime()", SEC_TO_UPDATE * 1000);
+			}
+			
+			function pauseGame() {
+				var newGameBtn = document.getElementById("newGameBtn");
+				if(!pause)
+				{
+					newGameBtn.value = "PAUSED";
+					clearTimeout(timeoutID);
+					ClearBoard();
+				}
+				else //Un-pause
+				{
+					DrawBoard();
+					var secLeftStr = (secLeft < 10) ? "0" + secLeft.toString() : secLeft.toString(); 
+					newGameBtn.value = minLeft.toString() + ":" + secLeftStr;
+					timeoutID = setTimeout("UpdateTime()", SEC_TO_UPDATE * 1000);
+				}
+				pause = !pause;
+			}
+			
+			function UpdateTime() {
+				if(pause || !start) return;
+				
+				secLeft -= SEC_TO_UPDATE;
+				if(secLeft < 0)
+				{
+					secLeft = (60 - SEC_TO_UPDATE);
+					minLeft--;
+				}
+				
+				drawTime();
+				
+				if(minLeft < 0)
+					EndGame();
+				else
+					timeoutID = setTimeout("UpdateTime()", SEC_TO_UPDATE * 1000);
+			}
+			
+			function EndGame() {
+				document.bgColor = "gray";
+				var newGameBtn = document.getElementById("newGameBtn");
+				newGameBtn.value = " New Game ";
+				start = false;
+			}
+			
+			function getWords() 
+			{  
+				window.location = "solve.php?" + boardStr;
+			}
+			
+			function playGame() 
+			{  
+				window.location = "solitaire.php?" + boardStr;
+			}
+
+		</script>
+    </head>
+    <body>
+		<center>
+        <a href="#"><img src="Kindoggle.png" alt="Kindoggle" onclick="CreateBoard()" /></a><br/>
+		<table background="Board.png" style="border=2px;">
+			<tbody>
+				<tr>
+					<td class="upper right" id="td00">S</td>
+					<td class="upper" id="td01">H</td>
+					<td class="upper mid" id="td02">O</td>
+					<td class="upper left" id="td03">R</td>
+				</tr>
+				<tr>
+					<td class="right" id="td10">G</td>
+					<td id="td11">I</td>
+					<td class="mid" id="td12">S</td>
+					<td class="left" id="td13">T</td>
+				</tr>
+				<tr>
+					<td class="right" id="td20">H</td>
+					<td id="td21">T</td>
+					<td class="mid" id="td22">E</td>
+					<td class="left" id="td23">D</td>
+				</tr>
+				<tr>
+					<td class="lower right" id="td30">S</td>
+					<td class="lower" id="td31">S</td>
+					<td class="lower mid" id="td32">E</td>
+					<td class="lower left" id="td33">N</td>
+				</tr>
+			</tbody>
+		</table>
+		<input type="button" id="newGameBtn" value=" New Game " onclick="ButtonPressed();" /><br/>
+		<a type="button" href="#" id="getAnswBtn" onclick="getWords();" >See Answers</a><br/>
+		<a type="button" href="#" id="playGameBtn" onclick="playGame();" >Play Solitaire Game</a><br/>
+		</center>
+    </body>
+</html>
